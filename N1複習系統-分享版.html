@@ -1,0 +1,1194 @@
+<meta charset="utf-8">
+<title>N1 複習系統</title>
+<style>
+:root {
+  --bg: #f5f3ee;
+  --card: #ffffff;
+  --ink: #2b2b2b;
+  --sub: #6b6b6b;
+  --accent: #b3424a;
+  --accent-soft: #f6e3e4;
+  --ok: #3a7d5c;
+  --ok-soft: #e2f0e9;
+  --bad: #b3424a;
+  --bad-soft: #f6e3e4;
+  --line: #e2ddd2;
+  --radius: 12px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", "Microsoft JhengHei", sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.7;
+}
+
+header {
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+header h1 { font-size: 1.15rem; letter-spacing: 0.05em; }
+header h1 .sub { color: var(--accent); }
+
+nav { display: flex; gap: 4px; flex-wrap: wrap; }
+
+nav button {
+  border: none;
+  background: transparent;
+  padding: 8px 16px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border-radius: 8px;
+  color: var(--sub);
+  font-family: inherit;
+}
+nav button:hover { background: var(--bg); }
+nav button.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+
+main { max-width: 860px; margin: 0 auto; padding: 28px 20px 80px; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+h2 { font-size: 1.2rem; margin-bottom: 12px; }
+h3 { font-size: 1.05rem; margin-bottom: 8px; }
+.muted { color: var(--sub); font-size: 0.9rem; }
+
+/* dashboard */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.stat {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  text-align: center;
+}
+.stat .num { font-size: 2rem; font-weight: 700; color: var(--accent); }
+.stat .label { color: var(--sub); font-size: 0.85rem; }
+
+.btn {
+  display: inline-block;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn:hover { opacity: 0.9; }
+.btn.secondary { background: var(--card); color: var(--ink); border: 1px solid var(--line); }
+.btn.ok { background: var(--ok); }
+.btn:disabled { opacity: 0.4; cursor: default; }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
+/* flashcard */
+.flashcard {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 40px 24px;
+  text-align: center;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+.flashcard .word { font-size: 2.4rem; font-weight: 700; }
+.flashcard .reading { font-size: 1.2rem; color: var(--accent); }
+.flashcard .meaning { font-size: 1.15rem; }
+.flashcard .example { font-size: 0.95rem; color: var(--sub); margin-top: 8px; }
+.flashcard .pos {
+  display: inline-block; align-self: center;
+  font-size: 0.75rem; color: var(--sub);
+  border: 1px solid var(--line); border-radius: 99px; padding: 1px 10px;
+}
+
+.rate-row { display: flex; gap: 8px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+.rate-btn {
+  border: 1px solid var(--line);
+  background: var(--card);
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+.rate-btn small { display: block; color: var(--sub); font-size: 0.7rem; }
+.rate-btn.again { border-color: var(--bad); color: var(--bad); }
+.rate-btn.good { border-color: var(--ok); color: var(--ok); }
+.rate-btn:hover { background: var(--bg); }
+
+/* quiz */
+.quiz-q { font-size: 1.15rem; margin-bottom: 16px; }
+.quiz-q .big { font-size: 1.8rem; font-weight: 700; display: block; margin: 8px 0; }
+.options { display: grid; gap: 10px; }
+.opt {
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: 8px;
+  padding: 12px 16px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 1rem;
+  font-family: inherit;
+}
+.opt:hover:not(:disabled) { border-color: var(--accent); }
+.opt.correct { background: var(--ok-soft); border-color: var(--ok); }
+.opt.wrong { background: var(--bad-soft); border-color: var(--bad); }
+.opt:disabled { cursor: default; }
+
+.explanation {
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: var(--bg);
+  border-radius: 8px;
+  font-size: 0.92rem;
+}
+.explanation .tag { font-weight: 700; color: var(--accent); }
+
+.progress-bar { height: 6px; background: var(--line); border-radius: 99px; margin-bottom: 16px; overflow: hidden; }
+.progress-bar .fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.3s; }
+
+/* lists */
+.item-list { display: grid; gap: 8px; }
+.item-row {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 16px;
+  cursor: pointer;
+}
+.item-row:hover { border-color: var(--accent); }
+.item-row .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.item-row .w { font-weight: 700; font-size: 1.05rem; }
+.item-row .r { color: var(--accent); font-size: 0.9rem; }
+.item-row .m { color: var(--sub); font-size: 0.9rem; }
+.item-row .detail { display: none; margin-top: 8px; font-size: 0.92rem; border-top: 1px dashed var(--line); padding-top: 8px; }
+.item-row.open .detail { display: block; }
+
+.level-dot {
+  display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--line); margin-left: 6px; vertical-align: middle;
+}
+.level-dot.l1 { background: #d9a0a4; }
+.level-dot.l2 { background: #c97e84; }
+.level-dot.l3 { background: #e0b34e; }
+.level-dot.l4 { background: #8fbc9f; }
+.level-dot.l5 { background: var(--ok); }
+
+.search-box {
+  width: 100%; padding: 10px 14px; margin-bottom: 12px;
+  border: 1px solid var(--line); border-radius: 8px;
+  font-size: 0.95rem; font-family: inherit; background: var(--card);
+}
+
+/* reading */
+.passage {
+  white-space: pre-wrap;
+  font-size: 1.02rem;
+  line-height: 2;
+  margin-bottom: 20px;
+}
+.reading-title { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.badge {
+  font-size: 0.75rem; padding: 2px 10px; border-radius: 99px;
+  background: var(--ok-soft); color: var(--ok);
+}
+
+.result-banner {
+  text-align: center; padding: 28px;
+}
+.result-banner .score { font-size: 2.6rem; font-weight: 700; color: var(--accent); }
+
+@media (max-width: 600px) {
+  main { padding: 16px 12px 60px; }
+  .flashcard .word { font-size: 1.9rem; }
+}
+/* ===== 主題切換（深色模式） ===== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #201d1a;
+    --card: #2b2724;
+    --ink: #e9e4db;
+    --sub: #a39c90;
+    --accent: #d98189;
+    --accent-soft: #443033;
+    --ok: #86bfa0;
+    --ok-soft: #2d3f35;
+    --bad: #d98189;
+    --bad-soft: #462f31;
+    --line: #3c3631;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #201d1a;
+  --card: #2b2724;
+  --ink: #e9e4db;
+  --sub: #a39c90;
+  --accent: #d98189;
+  --accent-soft: #443033;
+  --ok: #86bfa0;
+  --ok-soft: #2d3f35;
+  --bad: #d98189;
+  --bad-soft: #462f31;
+  --line: #3c3631;
+}
+:root[data-theme="light"] {
+  --bg: #f5f3ee;
+  --card: #ffffff;
+  --ink: #2b2b2b;
+  --sub: #6b6b6b;
+  --accent: #b3424a;
+  --accent-soft: #f6e3e4;
+  --ok: #3a7d5c;
+  --ok-soft: #e2f0e9;
+  --bad: #b3424a;
+  --bad-soft: #f6e3e4;
+  --line: #e2ddd2;
+}
+:root[data-theme="dark"] .btn { color: #201d1a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn { color: #201d1a; } }
+:root[data-theme="light"] .btn { color: #fff; }
+:root[data-theme="dark"] .btn.secondary { color: var(--ink); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.secondary { color: var(--ink); } }
+:root[data-theme="light"] .btn.secondary { color: var(--ink); }
+</style>
+<header>
+  <h1>日本語 <span class="sub">N1</span> 複習系統</h1>
+  <nav>
+    <button data-view="home" class="active">首頁</button>
+    <button data-view="vocab">單字</button>
+    <button data-view="grammar">文法</button>
+    <button data-view="reading">讀解</button>
+  </nav>
+</header>
+<main id="main"></main>
+<script>
+// N1 單字資料庫
+// 格式: { id, word, reading, meaning, pos(詞性), example, exampleTr(例句翻譯) }
+// 要新增單字，直接在陣列尾端加入新物件即可（id 不可重複）
+const VOCAB_DATA = [
+  { id: "v001", word: "曖昧", reading: "あいまい", meaning: "曖昧、含糊", pos: "な形", example: "彼の返事は曖昧で、賛成なのか反対なのか分からなかった。", exampleTr: "他的回答很含糊，不知道是贊成還是反對。" },
+  { id: "v002", word: "顕著", reading: "けんちょ", meaning: "顯著、明顯", pos: "な形", example: "少子化の影響は地方で特に顕著に現れている。", exampleTr: "少子化的影響在地方尤其明顯。" },
+  { id: "v003", word: "貢献", reading: "こうけん", meaning: "貢獻", pos: "名・する", example: "彼女は長年、地域医療の発展に貢献してきた。", exampleTr: "她多年來為地區醫療的發展做出貢獻。" },
+  { id: "v004", word: "妥協", reading: "だきょう", meaning: "妥協", pos: "名・する", example: "品質については一切妥協しないのが我が社の方針だ。", exampleTr: "在品質上絕不妥協是本公司的方針。" },
+  { id: "v005", word: "把握", reading: "はあく", meaning: "掌握、充分理解", pos: "名・する", example: "まず現状を正確に把握することが大切だ。", exampleTr: "首先正確掌握現狀很重要。" },
+  { id: "v006", word: "憂鬱", reading: "ゆううつ", meaning: "憂鬱、鬱悶", pos: "名・な形", example: "月曜日の朝はいつも憂鬱な気分になる。", exampleTr: "星期一早上總是感到憂鬱。" },
+  { id: "v007", word: "拒む", reading: "こばむ", meaning: "拒絕、阻擋", pos: "動詞", example: "彼は取材を頑なに拒んだ。", exampleTr: "他堅決拒絕採訪。" },
+  { id: "v008", word: "阻む", reading: "はばむ", meaning: "阻止、阻礙", pos: "動詞", example: "悪天候が登山隊の前進を阻んだ。", exampleTr: "惡劣的天氣阻礙了登山隊前進。" },
+  { id: "v009", word: "顧みる", reading: "かえりみる", meaning: "回顧；顧慮", pos: "動詞", example: "彼は危険を顧みず、川に飛び込んで子供を助けた。", exampleTr: "他不顧危險跳入河中救了孩子。" },
+  { id: "v010", word: "試みる", reading: "こころみる", meaning: "嘗試", pos: "動詞", example: "新しい治療法を試みたが、効果は見られなかった。", exampleTr: "嘗試了新的治療方法，但沒有看到效果。" },
+  { id: "v011", word: "賄う", reading: "まかなう", meaning: "供給、籌措（費用）", pos: "動詞", example: "彼は奨学金とアルバイトで学費を賄っている。", exampleTr: "他靠獎學金和打工籌措學費。" },
+  { id: "v012", word: "培う", reading: "つちかう", meaning: "培養、培育", pos: "動詞", example: "留学生活で培った語学力を仕事に生かしたい。", exampleTr: "想把留學生活中培養的語言能力運用到工作上。" },
+  { id: "v013", word: "滞る", reading: "とどこおる", meaning: "停滯、拖延", pos: "動詞", example: "家賃の支払いが三か月も滞っている。", exampleTr: "房租已經拖欠三個月了。" },
+  { id: "v014", word: "携わる", reading: "たずさわる", meaning: "從事、參與", pos: "動詞", example: "父は三十年間、教育に携わってきた。", exampleTr: "父親三十年來一直從事教育工作。" },
+  { id: "v015", word: "遂げる", reading: "とげる", meaning: "完成、達到", pos: "動詞", example: "この国は戦後、目覚ましい経済発展を遂げた。", exampleTr: "這個國家在戰後取得了驚人的經濟發展。" },
+  { id: "v016", word: "損なう", reading: "そこなう", meaning: "損害、傷害", pos: "動詞", example: "過労で健康を損なってしまった。", exampleTr: "因過勞而損害了健康。" },
+  { id: "v017", word: "免れる", reading: "まぬがれる", meaning: "免於、避免", pos: "動詞", example: "幸い、乗客は全員難を免れた。", exampleTr: "幸好乘客全員倖免於難。" },
+  { id: "v018", word: "潤う", reading: "うるおう", meaning: "濕潤；受惠、寬裕", pos: "動詞", example: "観光客の増加で地元経済が潤った。", exampleTr: "觀光客增加使當地經濟受惠。" },
+  { id: "v019", word: "廃れる", reading: "すたれる", meaning: "衰退、過時", pos: "動詞", example: "この町の伝統工芸は次第に廃れつつある。", exampleTr: "這個城鎮的傳統工藝正逐漸衰退。" },
+  { id: "v020", word: "凝る", reading: "こる", meaning: "熱衷；講究；痠痛", pos: "動詞", example: "最近、彼は料理に凝っている。", exampleTr: "最近他熱衷於做菜。" },
+  { id: "v021", word: "懸念", reading: "けねん", meaning: "擔憂、掛念", pos: "名・する", example: "個人情報の流出が懸念されている。", exampleTr: "人們擔憂個資外洩。" },
+  { id: "v022", word: "措置", reading: "そち", meaning: "措施、處置", pos: "名詞", example: "政府は緊急の措置を講じた。", exampleTr: "政府採取了緊急措施。" },
+  { id: "v023", word: "意図", reading: "いと", meaning: "意圖", pos: "名・する", example: "作者の意図を正確に読み取るのは難しい。", exampleTr: "要正確解讀作者的意圖很難。" },
+  { id: "v024", word: "軌道", reading: "きどう", meaning: "軌道；正軌", pos: "名詞", example: "新事業がようやく軌道に乗ってきた。", exampleTr: "新事業終於步上軌道。" },
+  { id: "v025", word: "均衡", reading: "きんこう", meaning: "均衡、平衡", pos: "名詞", example: "需要と供給の均衡が崩れ、価格が高騰した。", exampleTr: "供需失衡導致價格飆漲。" },
+  { id: "v026", word: "打開", reading: "だかい", meaning: "打開（僵局）、突破", pos: "名・する", example: "両国は事態を打開するため、交渉を再開した。", exampleTr: "兩國為打開僵局重啟談判。" },
+  { id: "v027", word: "動向", reading: "どうこう", meaning: "動向、趨勢", pos: "名詞", example: "市場の動向を注意深く見守る必要がある。", exampleTr: "必須密切關注市場動向。" },
+  { id: "v028", word: "配慮", reading: "はいりょ", meaning: "關照、考量", pos: "名・する", example: "高齢者への配慮が欠けた設計だと批判された。", exampleTr: "被批評是缺乏對高齡者考量的設計。" },
+  { id: "v029", word: "発足", reading: "ほっそく", meaning: "成立、開始運作", pos: "名・する", example: "新しいプロジェクトチームが正式に発足した。", exampleTr: "新的專案團隊正式成立了。" },
+  { id: "v030", word: "抜粋", reading: "ばっすい", meaning: "摘錄、節錄", pos: "名・する", example: "報告書から重要な部分を抜粋して紹介する。", exampleTr: "從報告書中摘錄重要部分來介紹。" },
+  { id: "v031", word: "予め", reading: "あらかじめ", meaning: "預先、事先", pos: "副詞", example: "参加できない場合は、予めご連絡ください。", exampleTr: "如果無法參加，請事先聯絡。" },
+  { id: "v032", word: "今更", reading: "いまさら", meaning: "事到如今", pos: "副詞", example: "今更謝っても、もう遅い。", exampleTr: "事到如今才道歉，已經太遲了。" },
+  { id: "v033", word: "悉く", reading: "ことごとく", meaning: "全部、統統", pos: "副詞", example: "彼の予想は悉く外れた。", exampleTr: "他的預測全部落空。" },
+  { id: "v034", word: "ひたすら", reading: "ひたすら", meaning: "一味地、一心一意", pos: "副詞", example: "彼女は合格を目指してひたすら勉強した。", exampleTr: "她為了考上而一心一意地念書。" },
+  { id: "v035", word: "専ら", reading: "もっぱら", meaning: "專門、淨是", pos: "副詞", example: "休日は専ら家で読書をして過ごす。", exampleTr: "假日淨是待在家裡看書。" },
+  { id: "v036", word: "辛うじて", reading: "かろうじて", meaning: "好不容易、勉強", pos: "副詞", example: "終電に辛うじて間に合った。", exampleTr: "勉強趕上了末班電車。" },
+  { id: "v037", word: "あくまで", reading: "あくまで", meaning: "始終、堅持到底", pos: "副詞", example: "これはあくまで私個人の意見です。", exampleTr: "這始終只是我個人的意見。" },
+  { id: "v038", word: "いかにも", reading: "いかにも", meaning: "的確、實在像是", pos: "副詞", example: "彼はいかにも残念そうな顔をした。", exampleTr: "他露出一副實在很遺憾的表情。" },
+  { id: "v039", word: "てっきり", reading: "てっきり", meaning: "（誤以為）一定是", pos: "副詞", example: "てっきり明日が締め切りだと思っていた。", exampleTr: "我還以為截止日一定是明天。" },
+  { id: "v040", word: "煩わしい", reading: "わずらわしい", meaning: "麻煩的、繁瑣的", pos: "い形", example: "手続きが煩わしくて、申請をあきらめた。", exampleTr: "手續太繁瑣，於是放棄了申請。" },
+  { id: "v041", word: "甚だしい", reading: "はなはだしい", meaning: "非常、極其嚴重", pos: "い形", example: "それは甚だしい誤解だ。", exampleTr: "那是非常嚴重的誤會。" },
+  { id: "v042", word: "紛らわしい", reading: "まぎらわしい", meaning: "容易混淆的", pos: "い形", example: "この二つの漢字は形が似ていて紛らわしい。", exampleTr: "這兩個漢字形狀相似，容易混淆。" },
+  { id: "v043", word: "夥しい", reading: "おびただしい", meaning: "大量的、非常多", pos: "い形", example: "会場には夥しい数の人が集まった。", exampleTr: "會場聚集了非常多的人。" },
+  { id: "v044", word: "素っ気ない", reading: "そっけない", meaning: "冷淡的", pos: "い形", example: "メールを送ったが、素っ気ない返事しか来なかった。", exampleTr: "寄了郵件，但只收到冷淡的回覆。" },
+  { id: "v045", word: "名残惜しい", reading: "なごりおしい", meaning: "依依不捨的", pos: "い形", example: "名残惜しいですが、そろそろ失礼します。", exampleTr: "雖然依依不捨，但差不多該告辭了。" },
+  { id: "v046", word: "遺憾", reading: "いかん", meaning: "遺憾", pos: "な形", example: "このような事態になり、誠に遺憾に思います。", exampleTr: "事情演變至此，深感遺憾。" },
+  { id: "v047", word: "円滑", reading: "えんかつ", meaning: "圓滑、順利", pos: "な形", example: "会議は円滑に進行した。", exampleTr: "會議順利進行。" },
+  { id: "v048", word: "画期的", reading: "かっきてき", meaning: "劃時代的", pos: "な形", example: "この発明は画期的なものとして高く評価された。", exampleTr: "這項發明被高度評價為劃時代的成果。" },
+  { id: "v049", word: "肝心", reading: "かんじん", meaning: "關鍵、最重要", pos: "な形", example: "肝心なところで失敗してしまった。", exampleTr: "在最關鍵的地方失敗了。" },
+  { id: "v050", word: "厳密", reading: "げんみつ", meaning: "嚴密、嚴格", pos: "な形", example: "厳密に言えば、この表現は正しくない。", exampleTr: "嚴格來說，這個表達方式不正確。" },
+  { id: "v051", word: "健やか", reading: "すこやか", meaning: "健康、健全", pos: "な形", example: "子供の健やかな成長を願っている。", exampleTr: "祈願孩子健康成長。" },
+  { id: "v052", word: "速やか", reading: "すみやか", meaning: "迅速", pos: "な形", example: "問題が発生した場合は、速やかに報告してください。", exampleTr: "發生問題時請迅速報告。" },
+  { id: "v053", word: "台無し", reading: "だいなし", meaning: "糟蹋、泡湯", pos: "な形", example: "急な雨で、せっかくの計画が台無しになった。", exampleTr: "突然下雨，好不容易的計畫都泡湯了。" },
+  { id: "v054", word: "強いる", reading: "しいる", meaning: "強迫", pos: "動詞", example: "上司に残業を強いられた。", exampleTr: "被上司強迫加班。" },
+  { id: "v055", word: "報いる", reading: "むくいる", meaning: "報答、回報", pos: "動詞", example: "ご恩に報いるため、精一杯努力します。", exampleTr: "為了報答恩情，我會竭盡全力。" },
+  { id: "v056", word: "怠る", reading: "おこたる", meaning: "怠慢、疏忽", pos: "動詞", example: "安全確認を怠ったことが事故の原因だ。", exampleTr: "疏忽安全確認是事故的原因。" },
+  { id: "v057", word: "偽る", reading: "いつわる", meaning: "欺騙、偽裝", pos: "動詞", example: "彼は身分を偽ってホテルに宿泊していた。", exampleTr: "他偽造身分住在飯店。" },
+  { id: "v058", word: "覆す", reading: "くつがえす", meaning: "推翻、顛覆", pos: "動詞", example: "新しい証拠が従来の学説を覆した。", exampleTr: "新的證據推翻了以往的學說。" },
+  { id: "v059", word: "凌ぐ", reading: "しのぐ", meaning: "凌駕；忍耐度過", pos: "動詞", example: "彼の実力は師匠を凌ぐと言われている。", exampleTr: "據說他的實力凌駕於師父之上。" },
+  { id: "v060", word: "赴く", reading: "おもむく", meaning: "前往、奔赴", pos: "動詞", example: "彼は単身、海外の支社に赴いた。", exampleTr: "他隻身前往海外分公司。" },
+  { id: "v061", word: "襲撃", reading: "しゅうげき", meaning: "襲擊", pos: "名・する", example: "輸送車が武装集団に襲撃された。", exampleTr: "運輸車遭到武裝集團襲擊。" },
+  { id: "v062", word: "殺到", reading: "さっとう", meaning: "蜂擁而至", pos: "名・する", example: "発売初日、店には客が殺到した。", exampleTr: "發售首日，顧客蜂擁而至店裡。" },
+  { id: "v063", word: "頑固", reading: "がんこ", meaning: "頑固", pos: "な形", example: "祖父は頑固で、一度決めたら意見を変えない。", exampleTr: "祖父很頑固，一旦決定就不會改變意見。" },
+  { id: "v064", word: "貫く", reading: "つらぬく", meaning: "貫穿；貫徹", pos: "動詞", example: "彼は生涯、自分の信念を貫いた。", exampleTr: "他一生貫徹自己的信念。" },
+  { id: "v065", word: "駆使", reading: "くし", meaning: "運用自如", pos: "名・する", example: "彼女は三か国語を駆使して交渉をまとめた。", exampleTr: "她運用三國語言完成了談判。" },
+  { id: "v066", word: "考慮", reading: "こうりょ", meaning: "考慮", pos: "名・する", example: "諸事情を考慮した上で、決定いたします。", exampleTr: "將在考慮各種情況後做出決定。" },
+  { id: "v067", word: "示唆", reading: "しさ", meaning: "暗示、啟發", pos: "名・する", example: "この研究結果は多くの示唆に富んでいる。", exampleTr: "這項研究結果富有許多啟發。" },
+  { id: "v068", word: "阻害", reading: "そがい", meaning: "阻礙", pos: "名・する", example: "規制が新規参入を阻害しているという指摘がある。", exampleTr: "有人指出法規阻礙了新業者加入。" },
+  { id: "v069", word: "脆弱", reading: "ぜいじゃく", meaning: "脆弱", pos: "な形", example: "この地域は災害に対して脆弱な構造を抱えている。", exampleTr: "這個地區存在對災害脆弱的結構。" },
+  { id: "v070", word: "漠然", reading: "ばくぜん", meaning: "模糊、籠統", pos: "副・たる", example: "将来について漠然とした不安を感じている。", exampleTr: "對未來感到模糊的不安。" },
+  { id: "v071", word: "克服", reading: "こくふく", meaning: "克服", pos: "名・する", example: "彼は長年の病気を克服して復帰した。", exampleTr: "他克服了多年的疾病後復出。" },
+  { id: "v072", word: "秩序", reading: "ちつじょ", meaning: "秩序", pos: "名詞", example: "社会の秩序を維持するために法律がある。", exampleTr: "法律是為了維持社會秩序而存在。" },
+  { id: "v073", word: "頻繁", reading: "ひんぱん", meaning: "頻繁", pos: "な形", example: "このあたりは事故が頻繁に起こる。", exampleTr: "這一帶事故頻繁發生。" },
+  { id: "v074", word: "膨大", reading: "ぼうだい", meaning: "龐大", pos: "な形", example: "膨大な資料の中から必要な情報を探し出した。", exampleTr: "從龐大的資料中找出了需要的資訊。" },
+  { id: "v075", word: "妨げる", reading: "さまたげる", meaning: "妨礙", pos: "動詞", example: "騒音が睡眠を妨げている。", exampleTr: "噪音妨礙了睡眠。" },
+  { id: "v076", word: "見合わせる", reading: "みあわせる", meaning: "暫停、觀望", pos: "動詞", example: "台風のため、電車は運転を見合わせている。", exampleTr: "由於颱風，電車暫停行駛。" },
+  { id: "v077", word: "余儀ない", reading: "よぎない", meaning: "不得已", pos: "い形", example: "資金不足で、計画の変更を余儀なくされた。", exampleTr: "因資金不足，被迫變更計畫。" },
+  { id: "v078", word: "一環", reading: "いっかん", meaning: "一環、一部分", pos: "名詞", example: "環境教育の一環として、植樹活動を行った。", exampleTr: "作為環境教育的一環，舉辦了植樹活動。" },
+  { id: "v079", word: "危惧", reading: "きぐ", meaning: "憂慮、擔心", pos: "名・する", example: "この種の鳥は絶滅が危惧されている。", exampleTr: "這種鳥被擔憂會絕種。" },
+  { id: "v080", word: "如実", reading: "にょじつ", meaning: "如實、真實", pos: "名詞", example: "この統計は格差の拡大を如実に物語っている。", exampleTr: "這項統計如實地反映了差距的擴大。" },
+];
+// N1 文法資料庫
+// 格式: { id, pattern, connection(接續), meaning, example, exampleTr, quiz: { sentence(用 ___ 表示空格), options, answer(正解索引), explanation } }
+// 要新增文法，直接在陣列尾端加入新物件即可（id 不可重複）
+const GRAMMAR_DATA = [
+  {
+    id: "g001", pattern: "～ならでは", connection: "名詞＋ならでは（の）",
+    meaning: "唯有～才有的（正面評價）", example: "この味は老舗ならではのものだ。", exampleTr: "這個味道是唯有老店才有的。",
+    quiz: { sentence: "手作り___の温かみが感じられる作品ですね。", options: ["ならでは", "をもって", "にあって", "たりとも"], answer: 0, explanation: "「名詞＋ならでは」表示「唯有～才有的特色」，多用於正面評價。" }
+  },
+  {
+    id: "g002", pattern: "～をもって", connection: "名詞＋をもって",
+    meaning: "以～（手段）；於～（時間點結束）", example: "本日をもって閉店いたします。", exampleTr: "本店於今日結束營業。",
+    quiz: { sentence: "誠に勝手ながら、3月31日___退職させていただきます。", options: ["をよそに", "をもって", "はおろか", "だに"], answer: 1, explanation: "「をもって」接在時間名詞後，表示「以此時間為界結束」，為鄭重表達。" }
+  },
+  {
+    id: "g003", pattern: "～んばかり", connection: "動詞ない形（去ない）＋んばかり",
+    meaning: "幾乎要～、眼看就要～", example: "彼女は泣かんばかりの顔で謝った。", exampleTr: "她一副快哭出來的表情道歉。",
+    quiz: { sentence: "客席からは割れ___ばかりの拍手が起こった。", options: ["る", "た", "ん", "ない"], answer: 2, explanation: "「割れんばかりの拍手」＝彷彿要震破（會場）般的掌聲。動詞ない形去「ない」＋んばかり。" }
+  },
+  {
+    id: "g004", pattern: "～かたわら", connection: "動詞辞書形／名詞の＋かたわら",
+    meaning: "一邊做本業，同時（做副業）", example: "彼は会社勤めのかたわら、小説を書いている。", exampleTr: "他一邊在公司上班，一邊寫小說。",
+    quiz: { sentence: "彼女は子育ての___、大学院で研究を続けている。", options: ["かたわら", "がてら", "かたがた", "ついでに"], answer: 0, explanation: "「かたわら」表示長期並行的兩件事（本業＋副業）。「がてら」「かたがた」多用於一次性動作。" }
+  },
+  {
+    id: "g005", pattern: "～がてら", connection: "動詞ます形（去ます）／名詞＋がてら",
+    meaning: "順便～", example: "散歩がてら、郵便局に寄ってきた。", exampleTr: "散步時順便去了郵局。",
+    quiz: { sentence: "駅まで妹を迎えに行き___、夕飯の買い物をしてきた。", options: ["ながら", "がてら", "つつ", "かたわら"], answer: 1, explanation: "「がてら」表示做A的同時順便做B，A多為移動性動作。" }
+  },
+  {
+    id: "g006", pattern: "～きらいがある", connection: "動詞辞書形／名詞の＋きらいがある",
+    meaning: "有～的（不良）傾向", example: "彼は物事を悲観的に考えるきらいがある。", exampleTr: "他有把事情想得很悲觀的傾向。",
+    quiz: { sentence: "最近の報道は、事実よりも話題性を重視する___がある。", options: ["きらい", "おそれ", "むき", "ほど"], answer: 0, explanation: "「きらいがある」表示有某種不好的傾向，多用於批評。" }
+  },
+  {
+    id: "g007", pattern: "～ずくめ", connection: "名詞＋ずくめ",
+    meaning: "清一色、全是～", example: "今年はいいことずくめの一年だった。", exampleTr: "今年是好事連連的一年。",
+    quiz: { sentence: "彼女は上から下まで黒___の服装で現れた。", options: ["まみれ", "だらけ", "ずくめ", "がち"], answer: 2, explanation: "「ずくめ」表示「全是～」。「黒ずくめ」為慣用表達。「まみれ」「だらけ」多指沾滿髒污等負面情況。" }
+  },
+  {
+    id: "g008", pattern: "～だに", connection: "動詞辞書形／名詞＋だに",
+    meaning: "光是～就…；連～也（不）", example: "その事故のことは想像するだに恐ろしい。", exampleTr: "那場事故光是想像就很可怕。",
+    quiz: { sentence: "彼が犯人だったとは、夢に___思わなかった。", options: ["だに", "すら", "こそ", "のみ"], answer: 0, explanation: "「夢にだに思わない」＝做夢也沒想到，慣用表達。" }
+  },
+  {
+    id: "g009", pattern: "～たりとも", connection: "数量詞（一～）＋たりとも～ない",
+    meaning: "連～也不（完全否定）", example: "試験まで一日たりとも無駄にできない。", exampleTr: "距離考試連一天也不能浪費。",
+    quiz: { sentence: "お客様からお預かりしたお金は、一円___おろそかにできない。", options: ["ばかりか", "たりとも", "なりとも", "として"], answer: 1, explanation: "「一＋量詞＋たりとも～ない」表示「連最小單位也不～」的完全否定。" }
+  },
+  {
+    id: "g010", pattern: "～てからというもの", connection: "動詞て形＋からというもの",
+    meaning: "自從～以後（狀態持續變化）", example: "子供が生まれてからというもの、生活が一変した。", exampleTr: "自從孩子出生後，生活完全變了。",
+    quiz: { sentence: "たばこをやめて___というもの、体の調子がとてもいい。", options: ["から", "ので", "こと", "まで"], answer: 0, explanation: "「てからというもの」強調自某契機後狀態持續改變，帶有感慨。" }
+  },
+  {
+    id: "g011", pattern: "～とあって", connection: "普通形／名詞＋とあって",
+    meaning: "因為～（特殊情況）", example: "連休初日とあって、高速道路は大渋滞だった。", exampleTr: "因為是連假第一天，高速公路大塞車。",
+    quiz: { sentence: "人気歌手が来る___、会場前には長い列ができた。", options: ["とあって", "にしては", "といっても", "ときたら"], answer: 0, explanation: "「とあって」表示「因為是（這種特殊情況），理所當然地…」，多用於描述客觀情況。" }
+  },
+  {
+    id: "g012", pattern: "～とあれば", connection: "普通形／名詞＋とあれば",
+    meaning: "如果是～的話（就特別對待）", example: "子供のためとあれば、どんな苦労もいとわない。", exampleTr: "如果是為了孩子，什麼辛苦都不怕。",
+    quiz: { sentence: "他ならぬ君の頼み___、断るわけにはいかない。", options: ["ときたら", "とあれば", "とはいえ", "にしろ"], answer: 1, explanation: "「とあれば」表示「如果是～這種情況，就會採取特別的行動」。" }
+  },
+  {
+    id: "g013", pattern: "～ときたら", connection: "名詞＋ときたら",
+    meaning: "說到～（不滿、批評）", example: "うちの息子ときたら、休みの日は寝てばかりいる。", exampleTr: "說到我家兒子，假日淨是睡覺。",
+    quiz: { sentence: "最近の若者___、挨拶もろくにできない、と祖父はよく嘆いている。", options: ["ときたら", "とあれば", "ともなると", "であれ"], answer: 0, explanation: "「ときたら」提出話題並帶不滿、批評的語氣，多用於身邊的人事物。" }
+  },
+  {
+    id: "g014", pattern: "～とはいえ", connection: "普通形／名詞＋とはいえ",
+    meaning: "雖說～但是", example: "春とはいえ、朝晩はまだ冷え込む。", exampleTr: "雖說是春天，早晚還是很冷。",
+    quiz: { sentence: "仕事___、家族との約束を破ってばかりでは信頼を失う。", options: ["ときたら", "とはいえ", "とあって", "なくして"], answer: 1, explanation: "「とはいえ」＝雖說如此，後句提出與前句預期相反的內容。" }
+  },
+  {
+    id: "g015", pattern: "～ないまでも", connection: "動詞ない形＋までも",
+    meaning: "即使達不到～至少…", example: "毎日とは言わないまでも、週に一度は掃除をしなさい。", exampleTr: "就算不是每天，至少一週要打掃一次。",
+    quiz: { sentence: "優勝でき___までも、ベスト４には入りたい。", options: ["る", "た", "ない", "ず"], answer: 2, explanation: "「ないまでも」表示「即使達不到較高標準，至少要達到較低標準」。" }
+  },
+  {
+    id: "g016", pattern: "～なくして（は）", connection: "名詞＋なくして（は）",
+    meaning: "如果沒有～就（不可能）", example: "皆様のご協力なくして、成功はあり得ませんでした。", exampleTr: "沒有各位的協助，就不可能成功。",
+    quiz: { sentence: "努力___、夢の実現はあり得ない。", options: ["なくして", "ないまでも", "ながらも", "なしでは"], answer: 0, explanation: "「なくして（は）」後接否定表達，表示「沒有～就無法…」，為書面語。" }
+  },
+  {
+    id: "g017", pattern: "～にあって", connection: "名詞＋にあって",
+    meaning: "處於～（特殊時期、狀況）", example: "戦時下にあって、人々は互いに助け合った。", exampleTr: "處於戰爭時期，人們互相幫助。",
+    quiz: { sentence: "少子高齢化が進む現代___、介護人材の確保は急務である。", options: ["にあって", "にひきかえ", "にもまして", "にそくして"], answer: 0, explanation: "「にあって」表示「處於～這種特殊狀況下」，為生硬的書面語。" }
+  },
+  {
+    id: "g018", pattern: "～に至るまで", connection: "名詞＋に至るまで",
+    meaning: "甚至到～（範圍極廣）", example: "彼は服装から髪型に至るまで、細かくチェックされた。", exampleTr: "他從服裝到髮型都被仔細檢查。",
+    quiz: { sentence: "この店では、食材はもちろん、調味料___こだわっている。", options: ["に至るまで", "をよそに", "はおろか", "を皮切りに"], answer: 0, explanation: "「に至るまで」強調範圍之廣，連細節都包含在內。" }
+  },
+  {
+    id: "g019", pattern: "～にもまして", connection: "名詞＋にもまして",
+    meaning: "比～更加", example: "今年は例年にもまして応募者が多い。", exampleTr: "今年應徵者比往年更多。",
+    quiz: { sentence: "結婚が決まった姉は、以前___きれいになった。", options: ["にもまして", "にひきかえ", "はさておき", "もさることながら"], answer: 0, explanation: "「にもまして」＝比～程度更高。「以前にもまして」為常見搭配。" }
+  },
+  {
+    id: "g020", pattern: "～にかたくない", connection: "動詞辞書形／名詞＋にかたくない",
+    meaning: "不難～（想像、理解）", example: "彼女の苦労は想像にかたくない。", exampleTr: "她的辛勞不難想像。",
+    quiz: { sentence: "突然解雇された彼の心中は、察する___。", options: ["にかたくない", "にたえない", "に足りない", "にすぎない"], answer: 0, explanation: "「にかたくない」表示「不難～」，常與「想像する」「察する」搭配。" }
+  },
+  {
+    id: "g021", pattern: "～に即して", connection: "名詞＋に即して",
+    meaning: "依照、按照～（現實、規則）", example: "実情に即して、柔軟に対応すべきだ。", exampleTr: "應依照實際情況靈活應對。",
+    quiz: { sentence: "処分は社内規定___行われた。", options: ["に即して", "をもって", "にあって", "を限りに"], answer: 0, explanation: "「に即して」表示以事實、經驗、規範為依據行事。" }
+  },
+  {
+    id: "g022", pattern: "～にたえない", connection: "動詞辞書形／名詞＋にたえない",
+    meaning: "不堪～；不勝～（感情）", example: "あの事故の映像は見るにたえない。", exampleTr: "那場事故的影像令人不忍卒睹。",
+    quiz: { sentence: "このたびはご支援いただき、感謝___。", options: ["にたえません", "にかたくないです", "に足ります", "に至りません"], answer: 0, explanation: "「感謝にたえない」＝不勝感激。接感情名詞時表示「非常～」。" }
+  },
+  {
+    id: "g023", pattern: "～に足る", connection: "動詞辞書形／名詞＋に足る",
+    meaning: "值得～、足以～", example: "彼は信頼に足る人物だ。", exampleTr: "他是值得信賴的人物。",
+    quiz: { sentence: "この論文には、主張を裏付ける___証拠が示されている。", options: ["に足る", "に至る", "にたえる", "に堪えない"], answer: 0, explanation: "「に足る」＝足以～、值得～，為書面語。" }
+  },
+  {
+    id: "g024", pattern: "～には当たらない", connection: "動詞辞書形／名詞＋には当たらない",
+    meaning: "用不著～、不必～", example: "彼が合格したからといって、驚くには当たらない。", exampleTr: "就算他考上了，也用不著驚訝。",
+    quiz: { sentence: "あれくらいのミスなら、責める___。", options: ["には当たらない", "にはおよばれない", "べからず", "までもある"], answer: 0, explanation: "「には当たらない」表示「沒有必要～」，常接「驚く」「褒める」「責める」等。" }
+  },
+  {
+    id: "g025", pattern: "～の極み", connection: "名詞＋の極み",
+    meaning: "～之極致", example: "こんな豪華な旅行ができるなんて、贅沢の極みだ。", exampleTr: "能有這麼豪華的旅行，真是奢侈之極。",
+    quiz: { sentence: "多くの方にご迷惑をおかけし、痛恨___です。", options: ["の極み", "の至り", "の限り", "のあまり"], answer: 0, explanation: "「の極み」表示程度達到極致。「痛恨の極み」為慣用表達。" }
+  },
+  {
+    id: "g026", pattern: "～はおろか", connection: "名詞＋はおろか",
+    meaning: "別說～連…也", example: "彼は漢字はおろか、ひらがなも書けない。", exampleTr: "他別說漢字，連平假名都不會寫。",
+    quiz: { sentence: "骨折して、走ること___、歩くことさえできない。", options: ["はおろか", "をよそに", "もかまわず", "はもとより"], answer: 0, explanation: "「はおろか」＝別說A，連B也…，後多接「も」「さえ」，帶負面語氣。" }
+  },
+  {
+    id: "g027", pattern: "～べく", connection: "動詞辞書形＋べく",
+    meaning: "為了～（書面語）", example: "真相を確かめるべく、現地に向かった。", exampleTr: "為了確認真相而前往當地。",
+    quiz: { sentence: "新記録を出す___、彼は毎日厳しい練習を続けている。", options: ["べく", "べからず", "まじく", "んがために"], answer: 0, explanation: "「べく」＝為了～，後接為此採取的行動，為書面語。" }
+  },
+  {
+    id: "g028", pattern: "～まじき", connection: "動詞辞書形＋まじき＋名詞",
+    meaning: "不應有的～", example: "それは教師にあるまじき行為だ。", exampleTr: "那是身為教師不應有的行為。",
+    quiz: { sentence: "患者の情報を漏らすとは、医者としてある___行為だ。", options: ["まじき", "べき", "ごとき", "らしき"], answer: 0, explanation: "「あるまじき＋名詞」＝（以該身分而言）不應有的～，用於強烈譴責。" }
+  },
+  {
+    id: "g029", pattern: "～までもない", connection: "動詞辞書形＋までもない",
+    meaning: "無需～、用不著～", example: "言うまでもないことだが、遅刻は厳禁だ。", exampleTr: "不用說，嚴禁遲到。",
+    quiz: { sentence: "この程度の熱なら、病院に行く___だろう。", options: ["までもない", "ままである", "きりがない", "ほかない"], answer: 0, explanation: "「までもない」表示程度輕微，沒有做的必要。" }
+  },
+  {
+    id: "g030", pattern: "～や否や", connection: "動詞辞書形＋や否や",
+    meaning: "一～就立刻…", example: "彼はベルが鳴るや否や、教室を飛び出した。", exampleTr: "鈴聲一響，他就立刻衝出教室。",
+    quiz: { sentence: "その商品は発売される___、たちまち売り切れた。", options: ["や否や", "そばから", "が早いか", "なり"], answer: 0, explanation: "「や否や」表示前項發生後緊接著發生後項。此處三個選項意思相近，但接續上「が早いか」「なり」也接辞書形——本題以「や否や」最自然且為既定事實描述。" }
+  },
+  {
+    id: "g031", pattern: "～を皮切りに", connection: "名詞＋を皮切りに",
+    meaning: "以～為開端", example: "東京公演を皮切りに、全国ツアーが始まる。", exampleTr: "以東京公演為開端，展開全國巡迴。",
+    quiz: { sentence: "彼の発言___、次々と質問の手が挙がった。", options: ["を皮切りに", "をもって", "を限りに", "をよそに"], answer: 0, explanation: "「を皮切りに」＝以～為起點，之後接連發生同類的事。" }
+  },
+  {
+    id: "g032", pattern: "～を禁じ得ない", connection: "名詞＋を禁じ得ない",
+    meaning: "不禁～、忍不住～", example: "被災地の様子に、涙を禁じ得なかった。", exampleTr: "看到災區的景象，不禁落淚。",
+    quiz: { sentence: "彼の無責任な発言には、怒り___。", options: ["を禁じ得ない", "を余儀なくされる", "にたえる", "に至らない"], answer: 0, explanation: "「を禁じ得ない」接感情名詞，表示無法抑制某種情感，為書面語。" }
+  },
+  {
+    id: "g033", pattern: "～を余儀なくされる", connection: "名詞＋を余儀なくされる",
+    meaning: "被迫～", example: "台風で、大会は中止を余儀なくされた。", exampleTr: "因颱風，大會被迫中止。",
+    quiz: { sentence: "業績悪化により、会社は工場の閉鎖___。", options: ["を余儀なくされた", "を禁じ得なかった", "に至らなかった", "を限りにした"], answer: 0, explanation: "「を余儀なくされる」表示因外在因素不得不做出某決定。" }
+  },
+  {
+    id: "g034", pattern: "～をよそに", connection: "名詞＋をよそに",
+    meaning: "不顧～、無視～", example: "親の心配をよそに、彼は留学を決めた。", exampleTr: "他不顧父母的擔心，決定去留學。",
+    quiz: { sentence: "住民の反対___、工事は着々と進められた。", options: ["をよそに", "をもとに", "を皮切りに", "をもって"], answer: 0, explanation: "「をよそに」＝無視他人的擔憂、反對等，逕自行動。" }
+  },
+  {
+    id: "g035", pattern: "～ものを", connection: "普通形＋ものを",
+    meaning: "明明～卻…（不滿、惋惜）", example: "早く病院に行けばよかったものを、我慢するから悪化したんだ。", exampleTr: "早點去醫院就好了，就是因為硬撐才惡化的。",
+    quiz: { sentence: "素直に謝ればいい___、彼は言い訳ばかりしている。", options: ["ものを", "ものの", "ものだから", "ものなら"], answer: 0, explanation: "「ものを」表示「明明～就好了，卻…」，帶有責備、惋惜的語氣。" }
+  },
+  {
+    id: "g036", pattern: "～ないではすまない", connection: "動詞ない形＋ではすまない",
+    meaning: "不～不行（社會常理上）", example: "人の物を壊したのだから、弁償しないではすまない。", exampleTr: "弄壞了別人的東西，不賠償是說不過去的。",
+    quiz: { sentence: "これだけ迷惑をかけたのだから、謝ら___ではすまないだろう。", options: ["ない", "ず", "ぬ", "なく"], answer: 0, explanation: "「ないではすまない」＝依常理或社會規範，不做不行。" }
+  },
+  {
+    id: "g037", pattern: "～ばこそ", connection: "ば形＋こそ",
+    meaning: "正因為～才…", example: "あなたのためを思えばこそ、厳しく言うのです。", exampleTr: "正因為為你著想，才會嚴厲地說。",
+    quiz: { sentence: "健康であれ___、仕事も勉強もできるのだ。", options: ["ばこそ", "ばそれまで", "ばきり", "ばまだしも"], answer: 0, explanation: "「ばこそ」強調原因，「正因為～才～」，句尾常用「のだ」。" }
+  },
+  {
+    id: "g038", pattern: "～といえども", connection: "普通形／名詞＋といえども",
+    meaning: "即使～也（書面語）", example: "専門家といえども、間違うことはある。", exampleTr: "即使是專家也會犯錯。",
+    quiz: { sentence: "いくら実の親___、子供の人生を勝手に決める権利はない。", options: ["といえども", "ときたら", "とばかりに", "とみるや"], answer: 0, explanation: "「といえども」＝即使是～也…，為生硬的書面語。" }
+  },
+  {
+    id: "g039", pattern: "～そばから", connection: "動詞辞書形／た形＋そばから",
+    meaning: "剛～就（又）…（反覆發生）", example: "習ったそばから忘れてしまう。", exampleTr: "剛學就忘。",
+    quiz: { sentence: "片付ける___、子供が部屋を散らかす。", options: ["そばから", "や否や", "が早いか", "なり"], answer: 0, explanation: "「そばから」表示剛做完就馬上發生（不希望的事），且反覆發生。這是與「や否や」「が早いか」的最大區別。" }
+  },
+  {
+    id: "g040", pattern: "～ともなると", connection: "名詞＋ともなると",
+    meaning: "一旦到了～（程度、立場）", example: "大学生ともなると、自分の行動に責任を持たなければならない。", exampleTr: "一旦成了大學生，就必須對自己的行為負責。",
+    quiz: { sentence: "連休___、この辺りの道路はどこも渋滞する。", options: ["ともなると", "とばかりに", "といえども", "とあれば"], answer: 0, explanation: "「ともなると」＝到了～這種特別的時期或立場，情況就會不同。" }
+  },
+];
+// N1 讀解資料庫
+// 格式: { id, title, passage, questions: [{ question, options, answer(正解索引), explanation }] }
+// 要新增文章，直接在陣列尾端加入新物件即可（id 不可重複）
+const READING_DATA = [
+  {
+    id: "r001",
+    title: "「便利さ」の代償",
+    passage: `スマートフォンの普及により、私たちはいつでもどこでも膨大な情報にアクセスできるようになった。分からないことがあれば検索すればよく、道に迷えば地図アプリが目的地まで案内してくれる。かつては辞書を引き、人に尋ね、試行錯誤しながら手に入れていた知識が、今や指先一つで手に入る時代である。
+
+　しかし、この便利さと引き換えに、私たちは何かを失いつつあるのではないだろうか。心理学の研究によれば、検索すればすぐに分かると認識している情報について、人はそれを記憶しようとする努力を無意識のうちに放棄する傾向があるという。つまり、情報を「覚える」のではなく、「どこにあるかを覚える」ようになったのである。
+
+　むろん、あらゆる情報を頭に詰め込む必要はない。問題は、知識が頭の中に蓄積されていなければ、それらを結びつけて新しい発想を生み出すことが難しくなるという点にある。創造とは、既存の知識同士の予期せぬ結合から生まれることが多い。検索は「問い」があって初めて機能するが、そもそも何を問うべきかを思いつくためには、自分の内側に一定の知識の蓄えが必要なのだ。
+
+　便利な道具を手放す必要はない。ただ、道具に委ねてよいものと、自らの内に育てるべきものとを見極める目こそが、これからの時代に求められているのではないか。`,
+    questions: [
+      {
+        question: "筆者によると、スマートフォンの普及によって人々の記憶の仕方はどのように変わったか。",
+        options: [
+          "情報そのものではなく、情報のありかを記憶するようになった",
+          "以前よりも多くの情報を記憶できるようになった",
+          "重要な情報だけを選んで記憶するようになった",
+          "記憶する努力を意識的にやめるようになった"
+        ],
+        answer: 0,
+        explanation: "第二段落「情報を『覚える』のではなく、『どこにあるかを覚える』ようになった」が根拠。努力の放棄は「無意識のうちに」なので、「意識的に」とする選択肢は誤り。"
+      },
+      {
+        question: "筆者が知識の蓄積を重視する理由は何か。",
+        options: [
+          "検索した情報は正確ではないことが多いから",
+          "新しい発想は蓄積された知識の結合から生まれるから",
+          "記憶力を鍛えないと脳が衰えてしまうから",
+          "道具はいつか使えなくなる可能性があるから"
+        ],
+        answer: 1,
+        explanation: "第三段落「創造とは、既存の知識同士の予期せぬ結合から生まれる」が根拠。他の選択肢は本文で述べられていない。"
+      },
+      {
+        question: "この文章で筆者が最も言いたいことは何か。",
+        options: [
+          "スマートフォンへの依存をやめ、記憶力を取り戻すべきだ",
+          "検索技術の発達により、知識の暗記は不要になった",
+          "道具に任せるものと自分で身につけるものを見分ける力が重要だ",
+          "創造性を高めるためには、検索の方法を工夫すべきだ"
+        ],
+        answer: 2,
+        explanation: "最終段落「道具に委ねてよいものと、自らの内に育てるべきものとを見極める目こそが…求められている」が結論。筆者は道具を手放せとは言っていない。"
+      }
+    ]
+  },
+  {
+    id: "r002",
+    title: "失敗の効用",
+    passage: `「失敗は成功のもと」という言葉があるが、近年の企業社会では、この格言が形骸化しているように思われる。多くの企業が「挑戦を奨励する」と掲げながら、実際には失敗した社員を評価の面で冷遇する。その結果、社員は失敗のリスクがある仕事を避け、確実に成果の出る無難な仕事ばかりを選ぶようになる。
+
+　ある製造業の経営者は、これを「挑戦の空洞化」と呼んだ。表向きは新しい試みが次々と打ち出されるのだが、その中身はいずれも成功が約束された「挑戦らしきもの」にすぎず、真に革新的な取り組みは誰も手を挙げないというのである。
+
+　注目すべきは、一部の企業が導入し始めた「失敗表彰制度」である。これは、意欲的な挑戦の末の失敗を積極的に評価し、その過程で得られた知見を組織全体で共有する仕組みだ。一見突飛な制度に見えるが、その本質は失敗の奨励ではない。挑戦に伴う失敗から学びを引き出し、それを組織の資産に変えることにある。失敗を隠すべき恥とする文化のもとでは、同じ失敗が繰り返される。失敗の記録と共有こそが、組織の学習能力を高めるのである。
+
+　ただし、こうした制度が機能するためには、失敗の「質」を見極める目が欠かせない。周到な準備の上での失敗と、怠慢による失敗とを同列に扱えば、制度はたちまち形骸化するだろう。`,
+    questions: [
+      {
+        question: "「挑戦の空洞化」とはどのような状態か。",
+        options: [
+          "社員が挑戦する意欲を完全に失ってしまった状態",
+          "挑戦と称するものが実は成功の確実なものばかりになる状態",
+          "企業が挑戦を奨励する制度を廃止してしまった状態",
+          "革新的な取り組みが失敗ばかり繰り返す状態"
+        ],
+        answer: 1,
+        explanation: "第二段落「その中身はいずれも成功が約束された『挑戦らしきもの』にすぎず」が根拠。挑戦の形はあるが中身が伴わない、という「空洞」の比喩。"
+      },
+      {
+        question: "筆者によると、「失敗表彰制度」の本質は何か。",
+        options: [
+          "社員にできるだけ多く失敗させること",
+          "失敗した社員を慰め、士気を保つこと",
+          "失敗から得た知見を組織の資産にすること",
+          "失敗を恐れない企業文化を宣伝すること"
+        ],
+        answer: 2,
+        explanation: "第三段落「その本質は失敗の奨励ではない。…失敗から学びを引き出し、それを組織の資産に変えることにある」が根拠。"
+      },
+      {
+        question: "筆者は、失敗表彰制度が機能する条件として何を挙げているか。",
+        options: [
+          "すべての失敗を平等に評価すること",
+          "失敗の内容や質を見極めて区別すること",
+          "表彰の回数をできるだけ増やすこと",
+          "失敗の記録を社外にも公開すること"
+        ],
+        answer: 1,
+        explanation: "最終段落「失敗の『質』を見極める目が欠かせない。周到な準備の上での失敗と、怠慢による失敗とを同列に扱えば、制度はたちまち形骸化する」が根拠。"
+      }
+    ]
+  },
+  {
+    id: "r003",
+    title: "方言の価値",
+    passage: `かつて方言は「矯正すべきもの」とされた時代があった。標準語教育が徹底された結果、地方の若者の間では方言離れが進み、消滅の危機に瀕している方言も少なくない。ところが近年、この流れに変化の兆しが見える。方言を「地域の文化資源」として捉え直し、観光や商品開発に活用する動きが各地で広がっているのだ。
+
+　方言みやげ、方言を使った広告、方言で話すキャラクター──こうした試みは一定の経済効果を上げており、方言に対する若い世代の意識も「恥ずかしいもの」から「親しみを感じさせるもの」へと変わりつつあるという調査結果もある。
+
+　もっとも、こうした「方言の商品化」に対しては批判もある。観光客向けに切り取られた方言は、本来の生活の文脈から切り離された「見せ物」にすぎず、方言の保存にはつながらないという指摘である。確かに、土産物のパッケージに印刷された方言は、日常の会話で使われる生きた言葉とは別物であろう。
+
+　しかし、私はこうした動きを否定的にばかり見る必要はないと考える。言語が生き残るために最も重要なのは、話者がその言語に誇りを持てるかどうかである。商品化をきっかけに方言への肯定的な意識が育つなら、それは方言が日常の中で使われ続けるための土壌になり得る。入り口が「見せ物」であっても、その先に生活の言葉としての再生があれば、それでよいのではないか。`,
+    questions: [
+      {
+        question: "方言をめぐる状況は、どのように変化してきたと述べられているか。",
+        options: [
+          "矯正の対象から、活用すべき文化資源へと見方が変わってきた",
+          "文化資源から、消滅すべきものへと見方が変わってきた",
+          "標準語教育が廃止され、方言教育が始まった",
+          "若者の方言離れが解消され、話者が増加に転じた"
+        ],
+        answer: 0,
+        explanation: "第一段落で「矯正すべきもの」→「地域の文化資源として捉え直し」という流れが述べられている。方言離れが「解消された」とまでは書かれていない。"
+      },
+      {
+        question: "「方言の商品化」への批判とはどのようなものか。",
+        options: [
+          "方言を使った商品は経済効果が低いという批判",
+          "生活から切り離された方言は保存につながらないという批判",
+          "観光客が方言を誤って覚えてしまうという批判",
+          "商品化によって方言が標準語化してしまうという批判"
+        ],
+        answer: 1,
+        explanation: "第三段落「本来の生活の文脈から切り離された『見せ物』にすぎず、方言の保存にはつながらないという指摘」が根拠。"
+      },
+      {
+        question: "筆者の考えに最も近いものはどれか。",
+        options: [
+          "方言の商品化は見せ物にすぎないので、やめるべきだ",
+          "方言は商品化によってのみ、生き残ることができる",
+          "商品化が方言への誇りを育てるなら、再生の入り口になり得る",
+          "方言への誇りよりも、経済効果を優先すべきだ"
+        ],
+        answer: 2,
+        explanation: "最終段落「商品化をきっかけに方言への肯定的な意識が育つなら…土壌になり得る」「入り口が『見せ物』であっても…それでよい」が筆者の立場。"
+      }
+    ]
+  }
+];
+/* ===== N1 複習系統 主程式 ===== */
+
+/* ---------- 儲存層 (localStorage) ---------- */
+const STORE_KEY = "n1-review-state-v1";
+
+function loadState() {
+  try {
+    return JSON.parse(localStorage.getItem(STORE_KEY)) || {};
+  } catch { return {}; }
+}
+function saveState() {
+  localStorage.setItem(STORE_KEY, JSON.stringify(state));
+}
+
+const state = Object.assign({
+  srs: {},          // { vocabId: { level, due } }  due = "YYYY-MM-DD"
+  grammarSrs: {},   // { grammarId: { level, due } }
+  quizHistory: [],  // { date, type, score, total }
+  readingDone: {},  // { readingId: score }
+}, loadState());
+
+/* ---------- SRS ---------- */
+const INTERVALS = [0, 1, 2, 4, 7, 15, 30]; // level -> 天數
+
+function fmtDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function today() {
+  return fmtDate(new Date());
+}
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + "T00:00:00");
+  d.setDate(d.getDate() + n);
+  return fmtDate(d);
+}
+function getSrs(map, id) {
+  return map[id] || { level: 0, due: today() };
+}
+function rateSrs(map, id, ok) {
+  const cur = getSrs(map, id);
+  const level = ok ? Math.min(cur.level + 1, INTERVALS.length - 1) : 0;
+  map[id] = { level, due: addDays(today(), INTERVALS[level]) };
+  saveState();
+}
+function dueItems(map, data) {
+  const t = today();
+  return data.filter(item => getSrs(map, item.id).due <= t);
+}
+
+/* ---------- 工具 ---------- */
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function sample(arr, n) { return shuffle(arr).slice(0, n); }
+function el(html) {
+  const t = document.createElement("template");
+  t.innerHTML = html.trim();
+  return t.content.firstElementChild;
+}
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+const main = document.getElementById("main");
+
+/* ---------- 導覽 ---------- */
+const views = { home: renderHome, vocab: renderVocab, grammar: renderGrammar, reading: renderReading };
+let currentView = "home";
+
+function nav(view) {
+  currentView = view;
+  document.querySelectorAll("nav button").forEach(b =>
+    b.classList.toggle("active", b.dataset.view === view));
+  main.innerHTML = "";
+  views[view]();
+  window.scrollTo(0, 0);
+}
+
+document.querySelectorAll("nav button").forEach(b =>
+  b.addEventListener("click", () => nav(b.dataset.view)));
+
+/* ---------- 首頁 ---------- */
+function renderHome() {
+  const vocabDue = dueItems(state.srs, VOCAB_DATA).length;
+  const grammarDue = dueItems(state.grammarSrs, GRAMMAR_DATA).length;
+  const learned = Object.values(state.srs).filter(s => s.level >= 4).length;
+  const readingDone = Object.keys(state.readingDone).length;
+
+  const recent = state.quizHistory.slice(-5).reverse();
+  const historyHtml = recent.length
+    ? recent.map(h => `<div class="muted">${h.date}｜${esc(h.type)}｜${h.score} / ${h.total}</div>`).join("")
+    : `<div class="muted">尚無測驗紀錄</div>`;
+
+  main.appendChild(el(`
+    <div>
+      <div class="stat-grid">
+        <div class="stat"><div class="num">${vocabDue}</div><div class="label">今日待複習單字</div></div>
+        <div class="stat"><div class="num">${grammarDue}</div><div class="label">今日待複習文法</div></div>
+        <div class="stat"><div class="num">${learned} / ${VOCAB_DATA.length}</div><div class="label">已熟練單字</div></div>
+        <div class="stat"><div class="num">${readingDone} / ${READING_DATA.length}</div><div class="label">已完成讀解</div></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h2>今日建議</h2>
+        <p class="muted">${vocabDue + grammarDue > 0
+          ? `你有 ${vocabDue} 個單字、${grammarDue} 條文法到了複習時間，先從閃卡複習開始吧。`
+          : "今天的複習都完成了！可以做一回測驗或讀解練習來鞏固。"}</p>
+        <div class="btn-row">
+          <button class="btn" id="go-vocab">複習單字</button>
+          <button class="btn secondary" id="go-grammar">複習文法</button>
+          <button class="btn secondary" id="go-reading">讀解練習</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>最近測驗</h2>
+        ${historyHtml}
+      </div>
+    </div>
+  `));
+  document.getElementById("go-vocab").onclick = () => nav("vocab");
+  document.getElementById("go-grammar").onclick = () => nav("grammar");
+  document.getElementById("go-reading").onclick = () => nav("reading");
+}
+
+/* ---------- 單字 ---------- */
+function renderVocab() {
+  const due = dueItems(state.srs, VOCAB_DATA).length;
+  main.appendChild(el(`
+    <div>
+      <div class="card">
+        <h2>單字複習</h2>
+        <p class="muted">閃卡採用間隔重複（答對間隔加長：1→2→4→7→15→30 天，答錯重來）。今日待複習：<b>${due}</b> 張</p>
+        <div class="btn-row">
+          <button class="btn" id="v-flash" ${due ? "" : "disabled"}>開始閃卡複習</button>
+          <button class="btn secondary" id="v-quiz">選擇題測驗（10 題）</button>
+          <button class="btn secondary" id="v-list">單字一覽</button>
+        </div>
+      </div>
+      <div id="v-area"></div>
+    </div>
+  `));
+  document.getElementById("v-flash").onclick = () => startFlashcards();
+  document.getElementById("v-quiz").onclick = () => startVocabQuiz();
+  document.getElementById("v-list").onclick = () => showVocabList();
+  showVocabList();
+}
+
+/* 閃卡複習 */
+function startFlashcards() {
+  const area = document.getElementById("v-area");
+  const queue = shuffle(dueItems(state.srs, VOCAB_DATA));
+  let idx = 0, done = 0;
+
+  function next() {
+    area.innerHTML = "";
+    if (idx >= queue.length) {
+      area.appendChild(el(`
+        <div class="card result-banner">
+          <h2>閃卡複習完成 🎉</h2>
+          <p class="muted">共複習 ${done} 張。答錯的卡片明天會再出現。</p>
+          <div class="btn-row" style="justify-content:center"><button class="btn" id="back">回單字選單</button></div>
+        </div>`));
+      document.getElementById("back").onclick = () => nav("vocab");
+      return;
+    }
+    const item = queue[idx];
+    const lv = getSrs(state.srs, item.id).level;
+    const card = el(`
+      <div>
+        <div class="progress-bar"><div class="fill" style="width:${(idx / queue.length) * 100}%"></div></div>
+        <div class="flashcard" id="fc">
+          <span class="pos">${esc(item.pos)}｜熟練度 ${lv}</span>
+          <div class="word">${esc(item.word)}</div>
+          <div id="fc-back" style="display:none">
+            <div class="reading">${esc(item.reading)}</div>
+            <div class="meaning">${esc(item.meaning)}</div>
+            <div class="example">${esc(item.example)}<br>${esc(item.exampleTr)}</div>
+          </div>
+          <p class="muted" id="fc-hint">點擊卡片顯示答案</p>
+        </div>
+        <div class="rate-row" id="rate" style="display:none">
+          <button class="rate-btn again">不記得<small>明天再出現</small></button>
+          <button class="rate-btn good">記得<small>間隔加長</small></button>
+        </div>
+      </div>`);
+    area.appendChild(card);
+
+    const fc = card.querySelector("#fc");
+    fc.onclick = () => {
+      card.querySelector("#fc-back").style.display = "block";
+      card.querySelector("#fc-hint").style.display = "none";
+      card.querySelector("#rate").style.display = "flex";
+    };
+    card.querySelector(".again").onclick = () => { rateSrs(state.srs, item.id, false); idx++; done++; next(); };
+    card.querySelector(".good").onclick = () => { rateSrs(state.srs, item.id, true); idx++; done++; next(); };
+  }
+  next();
+  area.scrollIntoView({ behavior: "smooth" });
+}
+
+/* 單字選擇題 */
+function startVocabQuiz() {
+  const area = document.getElementById("v-area");
+  const questions = sample(VOCAB_DATA, 10).map(item => {
+    const mode = Math.random() < 0.5 ? "meaning" : "reading";
+    const pool = VOCAB_DATA.filter(v => v.id !== item.id);
+    const distractors = sample(pool, 3).map(v => mode === "meaning" ? v.meaning : v.reading);
+    const correct = mode === "meaning" ? item.meaning : item.reading;
+    const options = shuffle([correct, ...distractors]);
+    return { item, mode, options, answer: options.indexOf(correct) };
+  });
+  runQuiz(area, questions, {
+    type: "單字測驗",
+    renderQ: q => `<div class="quiz-q">${q.mode === "meaning" ? "這個單字的意思是？" : "這個單字的讀音是？"}<span class="big">${esc(q.item.word)}</span></div>`,
+    renderExp: q => `<span class="tag">${esc(q.item.word)}（${esc(q.item.reading)}）＝${esc(q.item.meaning)}</span><br>${esc(q.item.example)}<br>${esc(q.item.exampleTr)}`,
+    onAnswer: (q, ok) => rateSrs(state.srs, q.item.id, ok),
+    onDone: () => nav("vocab"),
+  });
+}
+
+/* 單字一覽 */
+function showVocabList() {
+  const area = document.getElementById("v-area");
+  area.innerHTML = "";
+  const wrap = el(`<div>
+    <input class="search-box" id="v-search" placeholder="搜尋單字、讀音或意思…">
+    <div class="item-list" id="v-items"></div>
+  </div>`);
+  area.appendChild(wrap);
+  const listEl = wrap.querySelector("#v-items");
+
+  function render(filter = "") {
+    listEl.innerHTML = "";
+    const f = filter.trim().toLowerCase();
+    VOCAB_DATA
+      .filter(v => !f || v.word.includes(f) || v.reading.includes(f) || v.meaning.toLowerCase().includes(f))
+      .forEach(v => {
+        const lv = getSrs(state.srs, v.id).level;
+        const row = el(`
+          <div class="item-row">
+            <div class="head">
+              <span><span class="w">${esc(v.word)}</span> <span class="r">${esc(v.reading)}</span><span class="level-dot l${lv}" title="熟練度 ${lv}"></span></span>
+              <span class="m">${esc(v.meaning)}</span>
+            </div>
+            <div class="detail">${esc(v.pos)}<br>${esc(v.example)}<br><span class="muted">${esc(v.exampleTr)}</span></div>
+          </div>`);
+        row.onclick = () => row.classList.toggle("open");
+        listEl.appendChild(row);
+      });
+  }
+  wrap.querySelector("#v-search").addEventListener("input", e => render(e.target.value));
+  render();
+}
+
+/* ---------- 文法 ---------- */
+function renderGrammar() {
+  const due = dueItems(state.grammarSrs, GRAMMAR_DATA).length;
+  main.appendChild(el(`
+    <div>
+      <div class="card">
+        <h2>文法複習</h2>
+        <p class="muted">今日待複習文法：<b>${due}</b> 條。測驗答對會拉長該文法的複習間隔。</p>
+        <div class="btn-row">
+          <button class="btn" id="g-quiz">文法填空測驗（10 題）</button>
+          <button class="btn secondary" id="g-list">文法一覽</button>
+        </div>
+      </div>
+      <div id="g-area"></div>
+    </div>
+  `));
+  document.getElementById("g-quiz").onclick = () => startGrammarQuiz();
+  document.getElementById("g-list").onclick = () => showGrammarList();
+  showGrammarList();
+}
+
+function startGrammarQuiz() {
+  const area = document.getElementById("g-area");
+  // 優先出到期的文法，不足再隨機補
+  const due = shuffle(dueItems(state.grammarSrs, GRAMMAR_DATA));
+  const rest = shuffle(GRAMMAR_DATA.filter(g => !due.includes(g)));
+  const picked = due.concat(rest).slice(0, 10);
+  const questions = picked.map(g => ({
+    item: g,
+    options: g.quiz.options,
+    answer: g.quiz.answer,
+  }));
+  runQuiz(area, questions, {
+    type: "文法測驗",
+    renderQ: q => `<div class="quiz-q">選出最合適的表達：<span class="big" style="font-size:1.25rem">${esc(q.item.quiz.sentence)}</span></div>`,
+    renderExp: q => `<span class="tag">${esc(q.item.pattern)}</span>（${esc(q.item.connection)}）＝${esc(q.item.meaning)}<br>${esc(q.item.quiz.explanation)}`,
+    onAnswer: (q, ok) => rateSrs(state.grammarSrs, q.item.id, ok),
+    onDone: () => nav("grammar"),
+  });
+}
+
+function showGrammarList() {
+  const area = document.getElementById("g-area");
+  area.innerHTML = "";
+  const wrap = el(`<div>
+    <input class="search-box" id="g-search" placeholder="搜尋文法句型或意思…">
+    <div class="item-list" id="g-items"></div>
+  </div>`);
+  area.appendChild(wrap);
+  const listEl = wrap.querySelector("#g-items");
+
+  function render(filter = "") {
+    listEl.innerHTML = "";
+    const f = filter.trim().toLowerCase();
+    GRAMMAR_DATA
+      .filter(g => !f || g.pattern.includes(f) || g.meaning.toLowerCase().includes(f))
+      .forEach(g => {
+        const lv = getSrs(state.grammarSrs, g.id).level;
+        const row = el(`
+          <div class="item-row">
+            <div class="head">
+              <span><span class="w">${esc(g.pattern)}</span><span class="level-dot l${lv}" title="熟練度 ${lv}"></span></span>
+              <span class="m">${esc(g.meaning)}</span>
+            </div>
+            <div class="detail">接續：${esc(g.connection)}<br>${esc(g.example)}<br><span class="muted">${esc(g.exampleTr)}</span></div>
+          </div>`);
+        row.onclick = () => row.classList.toggle("open");
+        listEl.appendChild(row);
+      });
+  }
+  wrap.querySelector("#g-search").addEventListener("input", e => render(e.target.value));
+  render();
+}
+
+/* ---------- 通用測驗引擎 ---------- */
+function runQuiz(area, questions, { type, renderQ, renderExp, onAnswer, onDone }) {
+  let idx = 0, score = 0;
+
+  function next() {
+    area.innerHTML = "";
+    if (idx >= questions.length) {
+      state.quizHistory.push({ date: today(), type, score, total: questions.length });
+      saveState();
+      area.appendChild(el(`
+        <div class="card result-banner">
+          <div class="score">${score} / ${questions.length}</div>
+          <p class="muted">${score === questions.length ? "全對！太厲害了 🎉" : score >= questions.length * 0.7 ? "表現不錯，答錯的題目會加入複習排程。" : "別氣餒，答錯的項目會安排優先複習。"}</p>
+          <div class="btn-row" style="justify-content:center"><button class="btn" id="back">完成</button></div>
+        </div>`));
+      area.querySelector("#back").onclick = onDone;
+      return;
+    }
+    const q = questions[idx];
+    const card = el(`
+      <div class="card">
+        <div class="progress-bar"><div class="fill" style="width:${(idx / questions.length) * 100}%"></div></div>
+        <p class="muted">第 ${idx + 1} / ${questions.length} 題</p>
+        ${renderQ(q)}
+        <div class="options"></div>
+        <div class="exp-slot"></div>
+      </div>`);
+    area.appendChild(card);
+    const optWrap = card.querySelector(".options");
+
+    q.options.forEach((opt, i) => {
+      const btn = el(`<button class="opt">${esc(opt)}</button>`);
+      btn.onclick = () => {
+        const ok = i === q.answer;
+        if (ok) score++;
+        onAnswer(q, ok);
+        optWrap.querySelectorAll(".opt").forEach((b, j) => {
+          b.disabled = true;
+          if (j === q.answer) b.classList.add("correct");
+          else if (j === i) b.classList.add("wrong");
+        });
+        card.querySelector(".exp-slot").appendChild(el(`
+          <div class="explanation">${renderExp(q)}
+            <div class="btn-row"><button class="btn" id="next-q">${idx + 1 >= questions.length ? "看結果" : "下一題"}</button></div>
+          </div>`));
+        card.querySelector("#next-q").onclick = () => { idx++; next(); };
+        card.querySelector("#next-q").focus();
+      };
+      optWrap.appendChild(btn);
+    });
+  }
+  next();
+  area.scrollIntoView({ behavior: "smooth" });
+}
+
+/* ---------- 讀解 ---------- */
+function renderReading() {
+  const wrap = el(`<div>
+    <div class="card">
+      <h2>讀解練習</h2>
+      <p class="muted">閱讀文章後回答理解問題，每題附解析。</p>
+    </div>
+    <div class="item-list" id="r-list"></div>
+    <div id="r-area"></div>
+  </div>`);
+  main.appendChild(wrap);
+  const listEl = wrap.querySelector("#r-list");
+
+  READING_DATA.forEach(r => {
+    const done = state.readingDone[r.id];
+    const row = el(`
+      <div class="item-row">
+        <div class="head">
+          <span class="w">${esc(r.title)}</span>
+          <span>${done !== undefined ? `<span class="badge">已完成 ${done}/${r.questions.length}</span>` : `<span class="m">${r.questions.length} 題</span>`}</span>
+        </div>
+      </div>`);
+    row.onclick = () => startReading(r);
+    listEl.appendChild(row);
+  });
+}
+
+function startReading(r) {
+  const area = document.getElementById("r-area");
+  area.innerHTML = "";
+  let idx = 0, score = 0;
+
+  const card = el(`
+    <div class="card">
+      <div class="reading-title"><h2>${esc(r.title)}</h2></div>
+      <div class="passage">${esc(r.passage)}</div>
+      <div id="rq"></div>
+    </div>`);
+  area.appendChild(card);
+  const rq = card.querySelector("#rq");
+
+  function next() {
+    rq.innerHTML = "";
+    if (idx >= r.questions.length) {
+      state.readingDone[r.id] = score;
+      saveState();
+      rq.appendChild(el(`
+        <div class="result-banner">
+          <div class="score">${score} / ${r.questions.length}</div>
+          <div class="btn-row" style="justify-content:center"><button class="btn" id="r-back">回讀解列表</button></div>
+        </div>`));
+      rq.querySelector("#r-back").onclick = () => nav("reading");
+      return;
+    }
+    const q = r.questions[idx];
+    const qEl = el(`
+      <div>
+        <div class="quiz-q"><b>問${idx + 1}</b>　${esc(q.question)}</div>
+        <div class="options"></div>
+        <div class="exp-slot"></div>
+      </div>`);
+    rq.appendChild(qEl);
+    const optWrap = qEl.querySelector(".options");
+    q.options.forEach((opt, i) => {
+      const btn = el(`<button class="opt">${i + 1}．${esc(opt)}</button>`);
+      btn.onclick = () => {
+        if (i === q.answer) score++;
+        optWrap.querySelectorAll(".opt").forEach((b, j) => {
+          b.disabled = true;
+          if (j === q.answer) b.classList.add("correct");
+          else if (j === i) b.classList.add("wrong");
+        });
+        qEl.querySelector(".exp-slot").appendChild(el(`
+          <div class="explanation"><span class="tag">解析</span>　${esc(q.explanation)}
+            <div class="btn-row"><button class="btn" id="r-next">${idx + 1 >= r.questions.length ? "看結果" : "下一題"}</button></div>
+          </div>`));
+        qEl.querySelector("#r-next").onclick = () => { idx++; next(); };
+      };
+      optWrap.appendChild(btn);
+    });
+    qEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  next();
+  card.scrollIntoView({ behavior: "smooth" });
+}
+
+/* ---------- 啟動 ---------- */
+nav("home");
+</script>
