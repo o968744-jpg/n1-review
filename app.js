@@ -17,6 +17,7 @@ const state = Object.assign({
   grammarSrs: {},   // { grammarId: { level, due } }
   quizHistory: [],  // { date, type, score, total }
   readingDone: {},  // { readingId: score }
+  listeningDone: {}, // { listeningId: 1(對)|0(錯) }
 }, loadState());
 
 /* ---------- SRS ---------- */
@@ -69,10 +70,11 @@ function esc(s) {
 const main = document.getElementById("main");
 
 /* ---------- 導覽 ---------- */
-const views = { home: renderHome, vocab: renderVocab, grammar: renderGrammar, reading: renderReading };
+const views = { home: renderHome, vocab: renderVocab, grammar: renderGrammar, reading: renderReading, listening: renderListening };
 let currentView = "home";
 
 function nav(view) {
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
   currentView = view;
   document.querySelectorAll("nav button").forEach(b =>
     b.classList.toggle("active", b.dataset.view === view));
@@ -90,6 +92,7 @@ function renderHome() {
   const grammarDue = dueItems(state.grammarSrs, GRAMMAR_DATA).length;
   const learned = Object.values(state.srs).filter(s => s.level >= 4).length;
   const readingDone = Object.keys(state.readingDone).length;
+  const listeningDone = Object.keys(state.listeningDone).length;
 
   const recent = state.quizHistory.slice(-5).reverse();
   const historyHtml = recent.length
@@ -103,6 +106,7 @@ function renderHome() {
         <div class="stat"><div class="num">${grammarDue}</div><div class="label">今日待複習文法</div></div>
         <div class="stat"><div class="num">${learned} / ${VOCAB_DATA.length}</div><div class="label">已熟練單字</div></div>
         <div class="stat"><div class="num">${readingDone} / ${READING_DATA.length}</div><div class="label">已完成讀解</div></div>
+        <div class="stat"><div class="num">${listeningDone} / ${LISTENING_DATA.length}</div><div class="label">已完成聽力</div></div>
       </div>
       <div class="card" style="margin-top:16px">
         <h2>今日建議</h2>
@@ -468,6 +472,150 @@ function startReading(r) {
     qEl.scrollIntoView({ behavior: "smooth", block: "start" });
   }
   next();
+  card.scrollIntoView({ behavior: "smooth" });
+}
+
+/* ---------- 聽力 ---------- */
+let ttsVoice;
+function pickJaVoice() {
+  const vs = ("speechSynthesis" in window) ? speechSynthesis.getVoices().filter(v => v.lang.replace("_", "-").startsWith("ja")) : [];
+  ttsVoice = vs.find(v => /Nanami|Google|Keita|Haruka|Ichiro|Kyoko|Otoya/i.test(v.name)) || vs[0] || null;
+  return ttsVoice;
+}
+if ("speechSynthesis" in window) {
+  pickJaVoice();
+  speechSynthesis.onvoiceschanged = pickJaVoice;
+}
+
+// 依序唸出：情境說明 → 對話（男聲降調、女聲升調）→ 問題
+function speakItem(item, rate, onEnd) {
+  speechSynthesis.cancel();
+  const parts = [{ text: item.intro, pitch: 1 }];
+  item.script.split("\n").map(l => l.trim()).filter(Boolean).forEach(line => {
+    const m = line.match(/^(男|女|先生|学生|店員|客|アナウンス|専門家)[:：](.*)$/);
+    const speaker = m ? m[1] : "";
+    parts.push({
+      text: m ? m[2] : line,
+      pitch: /男|先生|店員/.test(speaker) ? 0.8 : /女|客/.test(speaker) ? 1.2 : 1,
+    });
+  });
+  parts.push({ text: item.question, pitch: 1 });
+  parts.forEach((p, i) => {
+    const u = new SpeechSynthesisUtterance(p.text);
+    u.lang = "ja-JP";
+    if (ttsVoice) u.voice = ttsVoice;
+    u.rate = rate;
+    u.pitch = p.pitch;
+    if (i === parts.length - 1 && onEnd) u.onend = onEnd;
+    speechSynthesis.speak(u);
+  });
+}
+
+function renderListening() {
+  const supported = "speechSynthesis" in window;
+  const hasJa = supported && !!pickJaVoice();
+  const notice = !supported
+    ? `<p class="muted">⚠️ 這個瀏覽器不支援語音合成，無法播放音檔。請改用 Chrome、Edge 或 Safari。</p>`
+    : !hasJa
+      ? `<p class="muted">⚠️ 找不到日文語音。手機通常內建日文語音可直接使用；電腦版請先在系統設定安裝日文語音（Windows：設定→時間與語言→語音→新增日文），或改用手機開啟本網站。安裝後重新整理即可。</p>`
+      : `<p class="muted">依 JLPT 聴解形式出題：先聽情境說明與對話，作答後才會顯示原稿與解析。</p>`;
+
+  const wrap = el(`<div>
+    <div class="card">
+      <h2>聽力測驗</h2>
+      ${notice}
+      <div class="btn-row" style="align-items:center">
+        <label class="muted">語速：
+          <select id="l-rate" style="font-family:inherit;padding:4px 8px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--ink)">
+            <option value="0.85">稍慢（0.85x）</option>
+            <option value="1" selected>正常（1x）</option>
+          </select>
+        </label>
+      </div>
+    </div>
+    <div class="item-list" id="l-list"></div>
+    <div id="l-area"></div>
+  </div>`);
+  main.appendChild(wrap);
+  const listEl = wrap.querySelector("#l-list");
+
+  LISTENING_DATA.forEach(item => {
+    const done = state.listeningDone[item.id];
+    const row = el(`
+      <div class="item-row">
+        <div class="head">
+          <span><span class="w">${esc(item.id.replace("l", "第 ").replace(/^第 0*/, "第 "))} 題</span> <span class="m">${esc(item.type)}</span></span>
+          <span>${done !== undefined ? `<span class="badge">${done ? "答對 ✓" : "已作答"}</span>` : `<span class="m">未作答</span>`}</span>
+        </div>
+      </div>`);
+    row.onclick = () => startListening(item);
+    listEl.appendChild(row);
+  });
+}
+
+function startListening(item) {
+  const area = document.getElementById("l-area");
+  area.innerHTML = "";
+  const rate = parseFloat(document.getElementById("l-rate").value) || 1;
+
+  const card = el(`
+    <div class="card">
+      <p class="muted">${esc(item.type)}</p>
+      <div class="quiz-q">${esc(item.intro)}</div>
+      <div class="btn-row">
+        <button class="btn" id="l-play">▶ 播放</button>
+        <button class="btn secondary" id="l-replay" disabled>↻ 再聽一次</button>
+      </div>
+      <p class="muted" id="l-status" style="margin-top:8px"></p>
+      <div style="margin-top:16px">
+        <div class="quiz-q" style="font-size:1rem"><b>${esc(item.question)}</b></div>
+        <div class="options"></div>
+        <div class="exp-slot"></div>
+      </div>
+    </div>`);
+  area.appendChild(card);
+
+  const status = card.querySelector("#l-status");
+  const playBtn = card.querySelector("#l-play");
+  const replayBtn = card.querySelector("#l-replay");
+  const play = () => {
+    status.textContent = "播放中…";
+    playBtn.disabled = true;
+    replayBtn.disabled = true;
+    speakItem(item, rate, () => {
+      status.textContent = "播放結束，請作答。";
+      replayBtn.disabled = false;
+    });
+  };
+  playBtn.onclick = play;
+  replayBtn.onclick = play;
+
+  const optWrap = card.querySelector(".options");
+  item.options.forEach((opt, i) => {
+    const btn = el(`<button class="opt">${i + 1}．${esc(opt)}</button>`);
+    btn.onclick = () => {
+      speechSynthesis.cancel();
+      const ok = i === item.answer;
+      state.listeningDone[item.id] = ok ? 1 : 0;
+      saveState();
+      optWrap.querySelectorAll(".opt").forEach((b, j) => {
+        b.disabled = true;
+        if (j === item.answer) b.classList.add("correct");
+        else if (j === i) b.classList.add("wrong");
+      });
+      card.querySelector(".exp-slot").appendChild(el(`
+        <div class="explanation">
+          <span class="tag">解析</span>　${esc(item.explanation)}
+          <div style="margin-top:10px;border-top:1px dashed var(--line);padding-top:10px">
+            <b>原稿</b><br><span style="white-space:pre-wrap">${esc(item.script)}</span><br>
+            <span class="muted">${esc(item.scriptTr)}</span>
+          </div>
+          <div class="btn-row"><button class="btn" id="l-back">回題目列表</button></div>
+        </div>`));
+      card.querySelector("#l-back").onclick = () => nav("listening");
+    };
+    optWrap.appendChild(btn);
+  });
   card.scrollIntoView({ behavior: "smooth" });
 }
 
